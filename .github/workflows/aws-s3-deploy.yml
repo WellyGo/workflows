@@ -55,12 +55,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Detect package manager
+        id: package-manager
+        run: |
+          if [ ! -f package-lock.json ] && [ -f pnpm-lock.yaml ]; then
+            echo "manager=pnpm" >> "$GITHUB_OUTPUT"
+          else
+            echo "manager=npm" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Set up pnpm
+        if: ${{ steps.package-manager.outputs.manager == 'pnpm' }}
+        uses: pnpm/action-setup@v4
       - name: Set up Node.js
         if: ${{ inputs.NODE_VERSION != '' }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ inputs.NODE_VERSION }}
-          cache: 'npm'
+          cache: ${{ steps.package-manager.outputs.manager }}
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
