@@ -54,7 +54,7 @@ jobs:
       name: ${{ inputs.ENVIRONMENT }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Detect package manager
         id: package-manager
         run: |
@@ -65,22 +65,22 @@ jobs:
           fi
       - name: Set up pnpm
         if: ${{ steps.package-manager.outputs.manager == 'pnpm' }}
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v5
       - name: Set up Node.js
         if: ${{ inputs.NODE_VERSION != '' }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ${{ inputs.NODE_VERSION }}
           cache: ${{ steps.package-manager.outputs.manager }}
       - name: Configure AWS credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ inputs.AWS_ROLE_TO_ASSUME }}
           aws-region: ${{ inputs.AWS_REGION }}
           role-session-name: ${{ github.event.repository.name }}-ci
       - name: Install Doppler CLI
         if: ${{ inputs.DOPPLER_DOWNLOAD_SECRETS }}
-        uses: dopplerhq/cli-action@v2
+        uses: dopplerhq/cli-action@v4
       - name: Download secrets from Doppler
         if: ${{ inputs.DOPPLER_DOWNLOAD_SECRETS }}
         env:
