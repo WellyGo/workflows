@@ -44,6 +44,11 @@ on:
         required: false
         default: false  
         type: boolean
+      HTML_NO_CACHE:
+        description: 'Serve .html files (index.html) with Cache-Control no-cache so browsers always load the latest deploy'
+        required: false
+        default: false
+        type: boolean
     secrets:
       DOPPLER_TOKEN:
         required: false
@@ -103,6 +108,16 @@ jobs:
       - name: Deploy to S3
         run: |
           aws s3 sync ${{ inputs.SOURCE_PATH }}/ s3://${{ vars.S3_BUCKET }} --delete
+      - name: Serve HTML without browser cache
+        # Sin Cache-Control el navegador guarda index.html por su cuenta y, después de un deploy,
+        # puede cargar una versión vieja que apunta a archivos .js que ya no existen.
+        # Los .js/.css llevan hash en el nombre, así que solo hace falta revalidar el HTML.
+        if: ${{ inputs.HTML_NO_CACHE }}
+        run: |
+          aws s3 cp ${{ inputs.SOURCE_PATH }}/ s3://${{ vars.S3_BUCKET }}/ --recursive \
+            --exclude "*" --include "*.html" \
+            --cache-control "no-cache, no-store, must-revalidate" \
+            --content-type "text/html; charset=utf-8"
       - name: Invalidate CloudFront cache
         run: |
           aws cloudfront create-invalidation --distribution-id ${{ vars.DISTRIBUTION_ID }} --paths '/*'
